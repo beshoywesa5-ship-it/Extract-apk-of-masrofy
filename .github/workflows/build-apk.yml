@@ -1,0 +1,95 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-android-apk:
+    name: Build Masrofy APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci || npm install --legacy-peer-deps
+
+      - name: Build Web Application
+        run: npm run build
+
+      - name: Set up Java JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Prepare Android Platform
+        run: |
+          # If android folder is missing or corrupted/incomplete, rebuild it freshly
+          if [ ! -f "android/build.gradle" ] || [ ! -f "android/settings.gradle" ] || [ ! -f "android/gradlew" ]; then
+            echo "Android platform is missing essential Gradle files. Regenerating clean android platform..."
+            rm -rf android
+            npx cap add android
+          fi
+          
+          # Sync web assets & plugins
+          npx cap sync android
+          
+          # Ensure gradlew has execute permissions
+          chmod +x android/gradlew
+
+      - name: Accept Android SDK Licenses
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses || true
+
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare APK Output
+        run: |
+          mkdir -p output-apk
+          APK_PATH=$(find android/app/build/outputs/apk -name "*.apk" | head -n 1)
+          if [ -f "$APK_PATH" ]; then
+            echo "Found APK at $APK_PATH"
+            cp "$APK_PATH" output-apk/Masrofy.apk
+          else
+            echo "ERROR: Could not find generated APK"
+            find android -name "*.apk" || true
+            exit 1
+          fi
+
+      - name: Upload Masrofy APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Masrofy-APK
+          path: output-apk/Masrofy.apk
+          retention-days: 30
+
+      - name: Publish Direct APK to GitHub Releases
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete v1.0 --yes || true
+          gh release create v1.0 output-apk/Masrofy.apk \
+            --title "تطبيق مصروفي v1.0 (ملف APK)" \
+            --notes "تطبيق مصروفي للأندرويد جاهز للتحميل والتثبيت المباشر." \
+            --latest || true
