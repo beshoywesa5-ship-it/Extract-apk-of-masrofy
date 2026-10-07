@@ -35,8 +35,10 @@ import {
   Delete,
   Wallet,
   Tag,
-  PenLine
+  PenLine,
+  Plus
 } from 'lucide-react';
+import { StyledIconSelector } from '../common/StyledIconSelector';
 import { Expense } from '../../types';
 
 interface AddExpenseModalProps {
@@ -69,6 +71,8 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
     language,
     t,
     accountSummaries,
+    saveCategoryItem,
+    saveAccountItem,
   } = useApp();
 
   const [amount, setAmount] = useState('');
@@ -89,10 +93,24 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
+  // Quick Inline Category and Account creation states
+  const [showQuickAddCategory, setShowQuickAddCategory] = useState(false);
+  const [quickCatName, setQuickCatName] = useState('');
+  const [quickCatIcon, setQuickCatIcon] = useState('Tag');
+  const [quickCatColor, setQuickCatColor] = useState('#3B82F6');
+
+  const [showQuickAddAccount, setShowQuickAddAccount] = useState(false);
+  const [quickAccName, setQuickAccName] = useState('');
+  const [quickAccIcon, setQuickAccIcon] = useState('Banknote');
+  const [quickAccColor, setQuickAccColor] = useState('#10B981');
+  const [quickAccOpeningBalance, setQuickAccOpeningBalance] = useState('0');
+
   useBodyScrollLock(isOpen);
   useBackHandler(isOpen, () => handleRequestClose(), 'add-expense');
   useBackHandler(showDiscardConfirm, () => setShowDiscardConfirm(false), 'add-discard');
   useBackHandler(showDeleteConfirm, () => setShowDeleteConfirm(false), 'add-delete');
+  useBackHandler(showQuickAddCategory, () => setShowQuickAddCategory(false), 'add-quick-cat');
+  useBackHandler(showQuickAddAccount, () => setShowQuickAddAccount(false), 'add-quick-acc');
 
   const amountInputRef = useRef<HTMLInputElement>(null);
 
@@ -220,6 +238,54 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
         setSuggestedCatId(null);
       }
     }
+  };
+
+  const handleSaveQuickCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickCatName.trim()) return;
+    const newCatId = `cat-${Date.now()}`;
+    const newCat = {
+      id: newCatId,
+      name: quickCatName.trim(),
+      icon: quickCatIcon || 'Tag',
+      color: quickCatColor || '#3B82F6',
+      type: type === 'income' ? ('income' as const) : ('expense' as const),
+      isDefault: false,
+      isActive: true,
+      sortOrder: categories.length + 1,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await saveCategoryItem(newCat);
+    setCategoryId(newCatId);
+    setQuickCatName('');
+    setShowQuickAddCategory(false);
+  };
+
+  const handleSaveQuickAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickAccName.trim()) return;
+    const newAccId = `acc-${Date.now()}`;
+    const newAcc = {
+      id: newAccId,
+      name: quickAccName.trim(),
+      type: 'cash' as const,
+      openingBalance: parseFloat(quickAccOpeningBalance) || 0,
+      color: quickAccColor || '#10B981',
+      icon: quickAccIcon || 'Banknote',
+      currency: settings.currency || 'EGP',
+      isActive: true,
+      isArchived: false,
+      showOnHome: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await saveAccountItem(newAcc);
+    setPaymentMethodId(newAccId);
+    setFromAccountId(newAccId);
+    setQuickAccName('');
+    setQuickAccOpeningBalance('0');
+    setShowQuickAddAccount(false);
   };
 
   const applySuggestedCategory = () => {
@@ -439,7 +505,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
               </button>
               <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight">
                 {editExpense 
-                  ? (type === 'transfer' ? t.addExpense.editTransfer : type === 'income' ? t.addExpense.editIncome : t.addExpense.editExpense) 
+                  ? (language === 'ar' ? 'تعديل' : 'Edit')
                   : (language === 'ar' 
                       ? (type === 'income' ? 'إضافة دخل' : type === 'transfer' ? 'تحويل رصيد' : 'إضافة مصروف')
                       : (type === 'income' ? 'Add Income' : type === 'transfer' ? 'Transfer' : 'Add Expense'))
@@ -599,7 +665,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 {/* From Account */}
                 <div>
                   <span className="block text-[10px] font-bold text-slate-400 mb-1">
-                    {t.addExpense.fromAccount}
+                    {language === 'ar' ? 'من محفظة:' : 'From:'}
                   </span>
                   <div className="space-y-1">
                     {activeAccounts.map(acc => {
@@ -633,7 +699,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                 {/* To Account */}
                 <div>
                   <span className="block text-[10px] font-bold text-slate-400 mb-1">
-                    {t.addExpense.toAccount}
+                    {language === 'ar' ? 'إلى محفظة:' : 'To:'}
                   </span>
                   <div className="space-y-1">
                     {activeAccounts.map(acc => {
@@ -702,6 +768,17 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                     </button>
                   );
                 })}
+
+                {/* Quick Add Account Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowQuickAddAccount(true)}
+                  className="px-2.5 py-1.5 rounded-xl border border-dashed border-blue-300 dark:border-blue-700/80 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 font-bold text-xs shrink-0 flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
+                  title={language === 'ar' ? 'إضافة محفظة جديدة' : 'Add Wallet'}
+                >
+                  <Plus size={13} />
+                  <span>{language === 'ar' ? 'محفظة جديدة' : 'New Wallet'}</span>
+                </button>
               </div>
             </div>
           )}
@@ -755,6 +832,17 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                     </button>
                   );
                 })}
+
+                {/* Quick Add Category Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowQuickAddCategory(true)}
+                  className="px-2.5 py-1.5 rounded-xl border border-dashed border-blue-300 dark:border-blue-700/80 bg-blue-50/50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 hover:bg-blue-100/60 font-bold text-xs shrink-0 flex items-center gap-1 transition-all cursor-pointer whitespace-nowrap"
+                  title={language === 'ar' ? 'إضافة فئة جديدة' : 'Add Category'}
+                >
+                  <Plus size={13} />
+                  <span>{language === 'ar' ? 'فئة جديدة' : 'New Category'}</span>
+                </button>
               </div>
 
               {/* Smart Auto-Suggestion Banner */}
@@ -1045,6 +1133,146 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
                   {t.detail.delete}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Add Category Sub-Dialog */}
+        {showQuickAddCategory && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="w-full max-w-xs bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xl space-y-3.5 text-xs">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {language === 'ar' ? 'إضافة فئة جديدة' : 'Add New Category'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowQuickAddCategory(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveQuickCategory} className="space-y-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {language === 'ar' ? 'اسم الفئة:' : 'Category Name:'}
+                  </label>
+                  <input
+                    type="text"
+                    value={quickCatName}
+                    onChange={e => setQuickCatName(e.target.value)}
+                    placeholder={language === 'ar' ? 'مثال: قهوة، مطاعم، بقالة' : 'e.g. Coffee, Groceries'}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-hidden focus:border-blue-600"
+                    autoFocus
+                  />
+                </div>
+
+                <StyledIconSelector
+                  selectedIcon={quickCatIcon}
+                  selectedColor={quickCatColor}
+                  onSelect={(icon, color) => {
+                    setQuickCatIcon(icon);
+                    setQuickCatColor(color);
+                  }}
+                  language={language}
+                />
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickAddCategory(false)}
+                    className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl"
+                  >
+                    {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!quickCatName.trim()}
+                    className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl"
+                  >
+                    {language === 'ar' ? 'حفظ الفئة' : 'Save'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Quick Add Account Sub-Dialog */}
+        {showQuickAddAccount && (
+          <div className="absolute inset-0 z-30 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+            <div className="w-full max-w-xs bg-white dark:bg-slate-900 rounded-3xl p-5 border border-slate-200 dark:border-slate-800 shadow-xl space-y-3.5 text-xs">
+              <div className="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                  {language === 'ar' ? 'إضافة محفظة جديدة' : 'Add New Wallet'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowQuickAddAccount(false)}
+                  className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveQuickAccount} className="space-y-3">
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {language === 'ar' ? 'اسم المحفظة:' : 'Wallet Name:'}
+                  </label>
+                  <input
+                    type="text"
+                    value={quickAccName}
+                    onChange={e => setQuickAccName(e.target.value)}
+                    placeholder={language === 'ar' ? 'مثال: فودافون كاش، محفظتي' : 'e.g. Mobile Wallet'}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-hidden focus:border-blue-600"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {language === 'ar' ? 'الرصيد الافتتاحي:' : 'Opening Balance:'}
+                  </label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={quickAccOpeningBalance}
+                    onChange={e => setQuickAccOpeningBalance(e.target.value)}
+                    placeholder="0"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-xs outline-hidden focus:border-blue-600"
+                  />
+                </div>
+
+                <StyledIconSelector
+                  selectedIcon={quickAccIcon}
+                  selectedColor={quickAccColor}
+                  onSelect={(icon, color) => {
+                    setQuickAccIcon(icon);
+                    setQuickAccColor(color);
+                  }}
+                  language={language}
+                />
+
+                <div className="pt-2 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickAddAccount(false)}
+                    className="px-3 py-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl"
+                  >
+                    {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!quickAccName.trim()}
+                    className="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold rounded-xl"
+                  >
+                    {language === 'ar' ? 'حفظ المحفظة' : 'Save'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         )}

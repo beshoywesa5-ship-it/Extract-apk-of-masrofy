@@ -162,6 +162,7 @@ export const MobileShell: React.FC = () => {
         onEdit={(exp) => {
           setViewingExpense(null);
           setEditingExpense(exp);
+          openAddExpense();
         }}
       />
 
