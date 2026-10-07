@@ -161,10 +161,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const storedTheme = localStorage.getItem('masrofy_theme');
       if (storedTheme === 'dark' || storedTheme === 'light') {
         initialTheme = storedTheme;
+      } else if (typeof window !== 'undefined' && window.matchMedia) {
+        initialTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       }
+
       const storedLang = localStorage.getItem('masrofy_lang');
       if (storedLang === 'ar' || storedLang === 'en') {
         initialLang = storedLang;
+      } else if (typeof navigator !== 'undefined') {
+        const sysLang = (navigator.language || (navigator.languages && navigator.languages[0]) || '').toLowerCase();
+        initialLang = sysLang.startsWith('ar') ? 'ar' : 'en';
       }
       const storedNumFormat = localStorage.getItem('masrofy_number_format') as NumberFormatOption;
       if (storedNumFormat === 'arabic' || storedNumFormat === 'western') {
@@ -227,8 +233,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   // Last used defaults
-  const [lastUsedCategoryId, setLastUsedCategoryId] = useState('cat-food');
-  const [lastUsedPaymentMethodId, setLastUsedPaymentMethodId] = useState('acc-card');
+  const [lastUsedCategoryId, setLastUsedCategoryId] = useState('cat-general');
+  const [lastUsedPaymentMethodId, setLastUsedPaymentMethodId] = useState('acc-cash');
 
   // Language & Translation setup
   const currentLanguage: Language = settings.language === 'ar' ? 'ar' : 'en';

@@ -132,7 +132,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
       const firstExpense = categories.find(c => c.isActive && (!c.type || c.type === 'expense' || !c.id.startsWith('cat-inc-')));
       const fallback = (lastUsedCategoryId && categories.some(c => c.id === lastUsedCategoryId && (!c.type || c.type === 'expense')))
         ? lastUsedCategoryId
-        : (firstExpense?.id || 'cat-food');
+        : (firstExpense?.id || categories[0]?.id || 'cat-general');
       setCategoryId(fallback);
     }
   };
@@ -163,7 +163,7 @@ export const AddExpenseModal: React.FC<AddExpenseModalProps> = ({
           defaultCat = prefillExpense?.categoryId || inc?.id || 'cat-inc-salary';
         } else {
           const exp = categories.find(c => c.isActive && (!c.type || c.type === 'expense' || !c.id.startsWith('cat-inc-')));
-          defaultCat = prefillExpense?.categoryId || (lastUsedCategoryId && categories.some(c => c.id === lastUsedCategoryId && (!c.type || c.type === 'expense')) ? lastUsedCategoryId : exp?.id) || 'cat-food';
+          defaultCat = prefillExpense?.categoryId || (lastUsedCategoryId && categories.some(c => c.id === lastUsedCategoryId && (!c.type || c.type === 'expense')) ? lastUsedCategoryId : exp?.id) || categories[0]?.id || 'cat-general';
         }
 
         const defaultPay = prefillExpense?.paymentMethodId || lastUsedPaymentMethodId || accounts[0]?.id || 'acc-cash';

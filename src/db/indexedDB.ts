@@ -11,33 +11,11 @@ const DB_NAME = 'AuraSpendDB';
 const DB_VERSION = 1;
 
 export const DEFAULT_CATEGORIES: Category[] = [
-  // Expense Categories
-  { id: 'cat-food', name: 'Food', icon: 'Utensils', color: '#EF4444', type: 'expense', isDefault: true, isActive: true, sortOrder: 1, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-groceries', name: 'Groceries', icon: 'ShoppingCart', color: '#F97316', type: 'expense', isDefault: true, isActive: true, sortOrder: 2, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-trans', name: 'Transportation', icon: 'Car', color: '#3B82F6', type: 'expense', isDefault: true, isActive: true, sortOrder: 3, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-bills', name: 'Bills', icon: 'Receipt', color: '#EAB308', type: 'expense', isDefault: true, isActive: true, sortOrder: 4, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-shopping', name: 'Shopping', icon: 'ShoppingBag', color: '#8B5CF6', type: 'expense', isDefault: true, isActive: true, sortOrder: 5, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-health', name: 'Health', icon: 'HeartPulse', color: '#EC4899', type: 'expense', isDefault: true, isActive: true, sortOrder: 6, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-ent', name: 'Entertainment', icon: 'Film', color: '#06B6D4', type: 'expense', isDefault: true, isActive: true, sortOrder: 7, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-edu', name: 'Education', icon: 'GraduationCap', color: '#10B981', type: 'expense', isDefault: true, isActive: true, sortOrder: 8, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-personal', name: 'Personal', icon: 'User', color: '#6366F1', type: 'expense', isDefault: true, isActive: true, sortOrder: 9, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-other', name: 'Other', icon: 'MoreHorizontal', color: '#64748B', type: 'expense', isDefault: true, isActive: true, sortOrder: 10, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  // Income Categories
-  { id: 'cat-inc-salary', name: 'Salary', icon: 'Briefcase', color: '#10B981', type: 'income', isDefault: true, isActive: true, sortOrder: 11, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-inc-freelance', name: 'Freelance', icon: 'Laptop', color: '#3B82F6', type: 'income', isDefault: true, isActive: true, sortOrder: 12, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-inc-invest', name: 'Investments', icon: 'TrendingUp', color: '#8B5CF6', type: 'income', isDefault: true, isActive: true, sortOrder: 13, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-inc-bonus', name: 'Bonus', icon: 'Award', color: '#F59E0B', type: 'income', isDefault: true, isActive: true, sortOrder: 14, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-inc-sales', name: 'Sales', icon: 'ShoppingBag', color: '#EC4899', type: 'income', isDefault: true, isActive: true, sortOrder: 15, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-inc-gift', name: 'Gift', icon: 'Gift', color: '#06B6D4', type: 'income', isDefault: true, isActive: true, sortOrder: 16, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'cat-inc-other', name: 'Other Income', icon: 'PlusCircle', color: '#64748B', type: 'income', isDefault: true, isActive: true, sortOrder: 17, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
+  { id: 'cat-general', name: 'عام', icon: 'Tag', color: '#3B82F6', type: 'expense', isDefault: true, isActive: true, sortOrder: 1, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
 ];
 
 export const DEFAULT_ACCOUNTS: Account[] = [
-  { id: 'acc-cash', name: 'Cash', type: 'cash', openingBalance: 0, currency: 'EGP', color: '#10B981', icon: 'Banknote', isActive: true, isArchived: false, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'acc-card', name: 'Debit Card', type: 'debit_card', openingBalance: 0, currency: 'EGP', color: '#3B82F6', icon: 'CreditCard', isActive: true, isArchived: false, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'acc-credit', name: 'Credit Card', type: 'credit_card', openingBalance: 0, currency: 'EGP', color: '#8B5CF6', icon: 'CreditCard', isActive: true, isArchived: false, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'acc-bank', name: 'Bank Account', type: 'bank', openingBalance: 0, currency: 'EGP', color: '#06B6D4', icon: 'Landmark', isActive: true, isArchived: false, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
-  { id: 'acc-wallet', name: 'Mobile Wallet', type: 'mobile_wallet', openingBalance: 0, currency: 'EGP', color: '#F59E0B', icon: 'Smartphone', isActive: true, isArchived: false, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
+  { id: 'acc-cash', name: 'كاش', type: 'cash', openingBalance: 0, currency: 'EGP', color: '#10B981', icon: 'Banknote', isActive: true, isArchived: false, showOnHome: false, createdAt: '2026-09-01T00:00:00Z', updatedAt: '2026-09-01T00:00:00Z' },
 ];
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -52,7 +30,7 @@ export const DEFAULT_SETTINGS: Settings = {
   autoLockTimeout: 'immediately',
   privacyBlurEnabled: true,
   autoPrivacyModeOnLaunch: false,
-  showWalletsOnHome: true,
+  showWalletsOnHome: false,
   firstDayOfMonth: 1,
   budgetNotificationThreshold: 80,
   hasCompletedOnboarding: true,

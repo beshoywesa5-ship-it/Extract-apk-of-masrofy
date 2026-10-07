@@ -678,27 +678,6 @@ export const SettingsScreen: React.FC = () => {
           </div>
         </div>
 
-        {/* Master Switch for Show Wallets on Home */}
-        <div className="pt-2 pb-1 px-1 flex items-center justify-between border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2">
-            <Eye size={15} className="text-blue-600 dark:text-blue-400" />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-              {language === 'ar' ? 'الظهور في الرئيسية' : 'Show Wallets on Home'}
-            </span>
-          </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={settings.showWalletsOnHome ?? true}
-            onClick={() => updateSettings({ showWalletsOnHome: !(settings.showWalletsOnHome ?? true) })}
-            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${(settings.showWalletsOnHome ?? true) ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}
-          >
-            <span
-              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out ${(settings.showWalletsOnHome ?? true) ? 'ltr:translate-x-4 rtl:-translate-x-4' : 'translate-x-0'}`}
-            />
-          </button>
-        </div>
-
         {isAccountsOpen && (
           <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 max-h-64 overflow-y-auto no-scrollbar animate-in fade-in duration-200">
             {accountSummaries.summaries.map(s => {

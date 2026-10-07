@@ -77,6 +77,11 @@ export const HomeScreen: React.FC = () => {
       .slice(0, 4);
   }, [selectedWalletId, expenses]);
 
+  // Wallets configured to show on Home (controlled per-wallet in account list)
+  const visibleHomeWallets = useMemo(() => {
+    return accountSummaries.summaries.filter(s => s.account.isActive && Boolean(s.account.showOnHome));
+  }, [accountSummaries]);
+
   const isEvening = useMemo(() => {
     const hour = new Date().getHours();
     return hour >= 20;
@@ -284,8 +289,8 @@ export const HomeScreen: React.FC = () => {
         )}
       </div>
 
-      {/* 3. MULTI-WALLET HORIZONTAL STRIP */}
-      {(settings.showWalletsOnHome ?? true) && (
+      {/* 3. MULTI-WALLET HORIZONTAL STRIP (Rendered when user activates showOnHome on wallets) */}
+      {visibleHomeWallets.length > 0 && (
         <div className="bg-white dark:bg-slate-900 rounded-2xl p-4 border border-slate-200/80 dark:border-slate-800 shadow-xs space-y-2.5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -324,9 +329,7 @@ export const HomeScreen: React.FC = () => {
 
           {/* Wallets Horizontal Scroll */}
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-            {accountSummaries.summaries
-              .filter(s => s.account.isActive && (s.account.showOnHome ?? true))
-              .map(s => {
+            {visibleHomeWallets.map(s => {
                 const isOwed = s.currentBalance < 0;
                 const accColor = s.account.color || '#3B82F6';
 
