@@ -917,7 +917,6 @@ export const SettingsScreen: React.FC = () => {
                             onConfirm: async () => {
                               await removeRecurringItem(rec.id);
                               setConfirmAction(null);
-                              showToast(language === 'ar' ? 'تم حذف المعاملة المتكررة' : 'Recurring item deleted');
                             },
                           });
                         }}
@@ -962,20 +961,22 @@ export const SettingsScreen: React.FC = () => {
 
         {isSecurityOpen && (
           <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 animate-in fade-in duration-200 text-xs">
-            {/* PIN Lock Toggle */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Lock size={15} className="text-slate-500" />
-                <div>
-                  <span className="font-bold text-slate-800 dark:text-slate-200 block">
-                    {language === 'ar' ? 'قفل التطبيق برمز PIN' : 'PIN Passcode Lock'}
-                  </span>
-                  {settings.pinLockEnabled && (
-                    <span className="text-[10px] text-slate-400 block">
-                      {language === 'ar' ? 'طلب الرمز عند فتح التطبيق' : 'Requires PIN on app launch'}
-                    </span>
-                  )}
-                </div>
+            {/* PIN Lock Toggle with inline Change PIN button next to title */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Lock size={15} className="text-slate-500 shrink-0" />
+                <span className="font-bold text-slate-800 dark:text-slate-200">
+                  {language === 'ar' ? 'قفل التطبيق برمز PIN' : 'PIN Passcode Lock'}
+                </span>
+                {settings.pinLockEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenSetPin(true)}
+                    className="px-2.5 py-0.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 font-bold text-[11px] cursor-pointer transition-colors border border-blue-200/50 dark:border-blue-800/40"
+                  >
+                    {language === 'ar' ? 'تغيير الرمز' : 'Change PIN'}
+                  </button>
+                )}
               </div>
               <button
                 type="button"
@@ -989,22 +990,6 @@ export const SettingsScreen: React.FC = () => {
                 />
               </button>
             </div>
-
-            {/* Change PIN button if PIN lock is enabled */}
-            {settings.pinLockEnabled && (
-              <div className="flex items-center justify-between ps-6 pt-1">
-                <span className="text-[11px] text-slate-500">
-                  {language === 'ar' ? 'رمز المرور الحالي محدد' : 'Current PIN is set'}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => handleOpenSetPin(true)}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-blue-600 dark:text-blue-400 font-bold text-[11px] cursor-pointer transition-colors"
-                >
-                  {language === 'ar' ? 'تغيير الرمز' : 'Change PIN'}
-                </button>
-              </div>
-            )}
 
             {/* Biometrics Toggle */}
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -1036,36 +1021,6 @@ export const SettingsScreen: React.FC = () => {
                 />
               </button>
             </div>
-
-            {/* Auto Lock Timeout */}
-            {settings.pinLockEnabled && (
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-700 dark:text-slate-300 block">
-                  {language === 'ar' ? 'مهلة القفل التلقائي:' : 'Auto-Lock Timeout:'}
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {[
-                    { id: 'immediately', label: language === 'ar' ? 'فوراً' : 'Immediately' },
-                    { id: '1m', label: language === 'ar' ? 'دقيقة' : '1 min' },
-                    { id: '5m', label: language === 'ar' ? '5 دقائق' : '5 mins' },
-                    { id: '15m', label: language === 'ar' ? '15 دقيقة' : '15 mins' },
-                  ].map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => updateSettings({ autoLockTimeout: opt.id as any })}
-                      className={`py-1.5 px-1 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
-                        (settings.autoLockTimeout || 'immediately') === opt.id
-                          ? 'bg-blue-600 text-white shadow-2xs'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* App Switcher Blur Toggle */}
             <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
@@ -1112,20 +1067,6 @@ export const SettingsScreen: React.FC = () => {
                 />
               </button>
             </div>
-
-            {/* Lock App Now Button */}
-            {settings.pinLockEnabled && (
-              <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => window.dispatchEvent(new CustomEvent('masrofy_lock_now'))}
-                  className="w-full py-2.5 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-750 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Lock size={14} className="text-slate-500" />
-                  <span>{language === 'ar' ? 'قفل التطبيق الآن' : 'Lock App Now'}</span>
-                </button>
-              </div>
-            )}
           </div>
         )}
       </div>

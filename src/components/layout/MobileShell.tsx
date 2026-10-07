@@ -10,6 +10,8 @@ import { TransactionDetailModal } from '../transactions/TransactionDetailModal';
 import { OnboardingModal } from '../onboarding/OnboardingModal';
 import { LockScreen } from '../security/LockScreen';
 import { Toast } from '../ui/Toast';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { useBackHandler } from '../../hooks/useBackHandler';
 import { navigationManager } from '../../utils/navigationManager';
 import { Shield } from 'lucide-react';
@@ -46,29 +48,20 @@ export const MobileShell: React.FC = () => {
 
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        lastHiddenTimeRef.current = Date.now();
         if (settings.privacyBlurEnabled ?? true) {
           setIsAppBlurred(true);
         }
+        // Immediate lock on exit/minimize
+        setIsLocked(true);
       } else {
         if (settings.privacyBlurEnabled ?? true) {
           setIsAppBlurred(false);
         }
-
-        // Check timeout
-        if (lastHiddenTimeRef.current) {
-          const elapsed = Date.now() - lastHiddenTimeRef.current;
-          const timeout = settings.autoLockTimeout || 'immediately';
-          let threshold = 0;
-          if (timeout === '1m') threshold = 60 * 1000;
-          else if (timeout === '5m') threshold = 5 * 60 * 1000;
-          else if (timeout === '15m') threshold = 15 * 60 * 1000;
-
-          if (elapsed >= threshold) {
-            setIsLocked(true);
-          }
-        }
       }
+    };
+
+    const handlePageHide = () => {
+      setIsLocked(true);
     };
 
     const handleLockNow = () => {
@@ -76,13 +69,32 @@ export const MobileShell: React.FC = () => {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', handlePageHide);
     window.addEventListener('masrofy_lock_now', handleLockNow);
+
+    // Native Android App Lifecycle listener via Capacitor
+    let capacitorListener: any = null;
+    try {
+      if (Capacitor.isNativePlatform()) {
+        CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+          if (!isActive) {
+            setIsLocked(true);
+          }
+        }).then(listener => {
+          capacitorListener = listener;
+        }).catch(() => {});
+      }
+    } catch {}
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', handlePageHide);
       window.removeEventListener('masrofy_lock_now', handleLockNow);
+      if (capacitorListener?.remove) {
+        capacitorListener.remove();
+      }
     };
-  }, [isLockEnabled, settings.autoLockTimeout, settings.privacyBlurEnabled]);
+  }, [isLockEnabled, settings.privacyBlurEnabled]);
 
   // Onboarding back handler
   useBackHandler(showOnboarding, () => setShowOnboarding(false), 'onboarding');

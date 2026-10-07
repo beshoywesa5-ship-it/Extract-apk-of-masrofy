@@ -1,7 +1,11 @@
 /**
- * Biometrics (Fingerprint / Face ID / Touch ID) utility using WebAuthn API.
- * Fully client-side, zero server dependencies, secure, and privacy-first.
+ * Biometrics (Fingerprint / Face ID / Touch ID) utility.
+ * Supports native Android & iOS biometrics via Capacitor BiometricAuth,
+ * with WebAuthn fallback for modern secure web browsers.
  */
+
+import { BiometricAuth, BiometryType } from '@aparajita/capacitor-biometric-auth';
+import { Capacitor } from '@capacitor/core';
 
 const CREDENTIAL_STORAGE_KEY = 'masrofy_biometric_cred_id';
 
@@ -9,6 +13,17 @@ const CREDENTIAL_STORAGE_KEY = 'masrofy_biometric_cred_id';
  * Checks if the user's device/browser supports platform biometrics (Face ID, Touch ID, Fingerprint, Windows Hello).
  */
 export async function isBiometricsSupported(): Promise<boolean> {
+  // 1. Native platform check (Android / iOS via Capacitor)
+  try {
+    if (typeof window !== 'undefined' && Capacitor.isNativePlatform()) {
+      const info = await BiometricAuth.checkBiometry();
+      return Boolean(info.isAvailable && info.biometryType !== BiometryType.none);
+    }
+  } catch (err) {
+    console.warn('Native biometrics check error:', err);
+  }
+
+  // 2. Web browser fallback via WebAuthn API
   try {
     if (typeof window === 'undefined') return false;
     if (!window.isSecureContext) return false;
@@ -19,13 +34,13 @@ export async function isBiometricsSupported(): Promise<boolean> {
     const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
     return Boolean(available);
   } catch (err) {
-    console.warn('Biometrics check error:', err);
+    console.warn('Web biometrics check error:', err);
     return false;
   }
 }
 
 /**
- * Checks if biometric credential is already registered in local storage.
+ * Checks if biometric credential is registered.
  */
 export function hasBiometricCredential(): boolean {
   try {
@@ -37,20 +52,43 @@ export function hasBiometricCredential(): boolean {
 
 /**
  * Registers biometric authentication on this device.
- * Triggers the native OS fingerprint/Face ID enrollment prompt.
  */
 export async function registerBiometrics(username = 'masrofy_user'): Promise<{ success: boolean; error?: string }> {
+  // 1. Native platform flow (Android BiometricPrompt)
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const info = await BiometricAuth.checkBiometry();
+      if (!info.isAvailable) {
+        return { success: false, error: 'unsupported' };
+      }
+
+      await BiometricAuth.authenticate({
+        reason: 'تأكيد بصمة الإصبع أو الوجه لتفعيل الحماية في مصروفي',
+        cancelTitle: 'إلغاء',
+      });
+
+      localStorage.setItem(CREDENTIAL_STORAGE_KEY, 'native_biometric_active');
+      return { success: true };
+    }
+  } catch (err: any) {
+    console.warn('Native biometric registration error:', err);
+    const code = err?.code || '';
+    if (code === 'userCancel' || code === 'appCancel' || err?.message?.toLowerCase().includes('cancel')) {
+      return { success: false, error: 'cancelled_or_denied' };
+    }
+    return { success: false, error: err?.message || 'unknown' };
+  }
+
+  // 2. Web browser flow via WebAuthn
   try {
     const supported = await isBiometricsSupported();
     if (!supported) {
       return { success: false, error: 'unsupported' };
     }
 
-    // Generate random 32-byte challenge
     const challenge = new Uint8Array(32);
     window.crypto.getRandomValues(challenge);
 
-    // Random user ID
     const userId = new Uint8Array(16);
     window.crypto.getRandomValues(userId);
 
@@ -86,7 +124,6 @@ export async function registerBiometrics(username = 'masrofy_user'): Promise<{ s
       return { success: false, error: 'cancelled' };
     }
 
-    // Convert rawId to Base64 to store locally
     const rawId = new Uint8Array(credential.rawId);
     let binary = '';
     for (let i = 0; i < rawId.byteLength; i++) {
@@ -109,6 +146,25 @@ export async function registerBiometrics(username = 'masrofy_user'): Promise<{ s
  * Authenticates using device biometrics (Fingerprint / Face ID).
  */
 export async function authenticateWithBiometrics(): Promise<{ success: boolean; error?: string }> {
+  // 1. Native platform authentication (Android BiometricPrompt)
+  try {
+    if (Capacitor.isNativePlatform()) {
+      await BiometricAuth.authenticate({
+        reason: 'تأكيد هويتك بالبصمة لفتح مصروفي',
+        cancelTitle: 'إلغاء',
+      });
+      return { success: true };
+    }
+  } catch (err: any) {
+    console.warn('Native biometric authentication error:', err);
+    const code = err?.code || '';
+    if (code === 'userCancel' || code === 'appCancel' || err?.message?.toLowerCase().includes('cancel')) {
+      return { success: false, error: 'cancelled_or_denied' };
+    }
+    return { success: false, error: err?.message || 'failed' };
+  }
+
+  // 2. Web browser authentication via WebAuthn
   try {
     const supported = await isBiometricsSupported();
     if (!supported) {
@@ -121,7 +177,7 @@ export async function authenticateWithBiometrics(): Promise<{ success: boolean; 
     const storedB64Id = localStorage.getItem(CREDENTIAL_STORAGE_KEY);
     let allowCredentials: PublicKeyCredentialDescriptor[] | undefined = undefined;
 
-    if (storedB64Id) {
+    if (storedB64Id && storedB64Id !== 'native_biometric_active') {
       try {
         const binary = atob(storedB64Id);
         const bytes = new Uint8Array(binary.length);

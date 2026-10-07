@@ -490,16 +490,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       await localDB.deleteCategory(id);
       setCategories(prev => prev.filter(c => c.id !== id));
-      showToast(
-        currentLanguage === 'ar' ? 'تم حذف الفئة بنجاح' : 'Category deleted successfully'
-      );
     } catch (err: any) {
       console.error('Failed to delete category:', err);
-      showToast(
-        currentLanguage === 'ar' ? 'تعذر حذف الفئة' : 'Could not delete category'
-      );
     }
-  }, [categories, expenses, currentLanguage, showToast]);
+  }, [categories, expenses]);
 
   // Account Management & Multi-Wallet actions
   const saveAccountItem = useCallback(async (account: Account) => {
@@ -574,16 +568,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       await localDB.deleteAccount(id);
       setAccounts(prev => prev.filter(a => a.id !== id));
-      showToast(
-        currentLanguage === 'ar' ? 'تم حذف المحفظة بنجاح' : 'Wallet deleted successfully'
-      );
     } catch (err: any) {
       console.error('Failed to delete account:', err);
-      showToast(
-        currentLanguage === 'ar' ? 'تعذر حذف المحفظة' : 'Could not delete wallet'
-      );
     }
-  }, [accounts, expenses, currentLanguage, showToast]);
+  }, [accounts, expenses]);
 
   const createTransfer = useCallback(async (data: {
     amount: number;
